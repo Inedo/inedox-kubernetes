@@ -1,6 +1,6 @@
 # inedox-kubernetes
 
-[![Build status](https://ci.appveyor.com/api/projects/status/r05w76a3ieb9b4bd/branch/master?svg=true)](https://ci.appveyor.com/project/Inedo/inedox-kubernetes/branch/master)
+[![Build status](https://buildmaster.inedo.com/api/ci-badges/image?API_Key=badges&$ApplicationId=21)](https://buildmaster.inedo.com/api/ci-badges/link?API_Key=badges&$ApplicationId=21)
 
 Provides operations that interact with Kubernetes clusters.
 
