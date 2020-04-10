@@ -112,7 +112,13 @@ namespace Inedo.Extensions.Kubernetes.Operations
             }
         }
 
+        [Obsolete]
         public override ComparisonResult Compare(PersistedConfiguration other)
+        {
+            return CompareInternal(other);
+        }
+
+        private ComparisonResult CompareInternal(PersistedConfiguration other)
         {
             var config = (KubernetesResourceConfiguration)other;
             if (this.Template.Exists != config.Exists)
@@ -137,6 +143,11 @@ namespace Inedo.Extensions.Kubernetes.Operations
                 GetJsonDifferences("metadata", template.Property("metadata").Value, actual.Property("metadata").Value)
                 .Concat(GetJsonDifferences("spec", template.Property("spec").Value, actual.Property("spec").Value))
             );
+        }
+
+        public override Task<ComparisonResult> CompareAsync(PersistedConfiguration other, IOperationCollectionContext context)
+        {
+            return Task.FromResult(CompareInternal(other));
         }
 
         private void FixArrayMergeLength(JToken template, JToken actual)
