@@ -33,7 +33,8 @@ namespace Inedo.Extensions.Kubernetes.Scanners
         [DisplayName("Authorization Type")]
         [Required]
         public AuthenticationType AuthorizationType { get; set; }
-        
+
+        [Persistent]
         [DisplayName("User Name")]
         [Description("Only used if Authentication Type is Basic Authentication")]
         public string UserName { get; set; }
