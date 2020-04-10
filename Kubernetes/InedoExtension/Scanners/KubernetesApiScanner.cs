@@ -19,7 +19,7 @@ namespace Inedo.Extensions.Kubernetes.Scanners
 {
 
     [DisplayName("Kubernetes API Scanner")]
-    [Description("Automatically sends Docker Container Layers to the Clair V1 API for static analysis of vulnerabilities. This requires Web.BaseUrl to be set in your Advanced Settings.")]
+    [Description("Automatically scans a Kubernetes API for container images and reports back their status.")]
     public sealed class KubernetesApiScanner : PackageContainerScanner
 
     {
