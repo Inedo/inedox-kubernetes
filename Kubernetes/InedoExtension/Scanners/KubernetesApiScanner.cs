@@ -105,7 +105,7 @@ namespace Inedo.Extensions.Kubernetes.Scanners
         private async Task<IEnumerable<KubernetesContainerUsageData>> GetContainersAsync(HttpClient client, CancellationToken cancellationToken, string continueToken = null)
         {
             var containers = new List<KubernetesContainerUsageData>();
-            var response = await client.GetAsync("/api/v1/pods?limit=2" + (string.IsNullOrWhiteSpace(continueToken) ? string.Empty : $"&continue={continueToken}"), cancellationToken);
+            var response = await client.GetAsync("/api/v1/pods" + (string.IsNullOrWhiteSpace(continueToken) ? string.Empty : $"?continue={continueToken}"), cancellationToken);
             if (response.IsSuccessStatusCode)
             {
                 var result = JsonConvert.DeserializeObject<JObject>(await response.Content.ReadAsStringAsync());
