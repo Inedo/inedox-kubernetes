@@ -116,15 +116,27 @@ namespace Inedo.Extensions.Kubernetes.Scanners
                     var statuses = (JArray)pod["status"]["containerStatuses"];
                     foreach(var containerStatus in statuses)
                     {
-                        var state = ((JObject)containerStatus["state"]).Properties().FirstOrDefault();
+                        var state = ((JObject)containerStatus["state"]);
+
                         ContainerState? stateValue = null;
                         DateTimeOffset? created = null;
-                        if (state != null)
+
+
+                        if (state?["running"] != null)
                         {
-                            if (Enum.TryParse<ContainerState>(state.Name, true, out var parsedValue))
-                                stateValue = parsedValue;
-                            if (DateTimeOffset.TryParse((string)((JObject)state.Value)["startedAt"], out var parsedDate))
+                            stateValue = ContainerState.Running;
+                            if (DateTimeOffset.TryParse((string)state["running"]["startedAt"], out var parsedDate))
                                 created = parsedDate;
+                        }
+                        else if (state?["terminated"] != null)
+                        {
+                            stateValue = ContainerState.Exited;
+                            if (DateTimeOffset.TryParse((string)state["running"]["startedAt"], out var parsedDate))
+                                created = parsedDate;
+                        }
+                        else if (state?["waiting"] != null)
+                        {
+                            stateValue = ContainerState.Created;
                         }
                         var id = (string)containerStatus["imageID"];
                         if (id.Contains("@")) {
