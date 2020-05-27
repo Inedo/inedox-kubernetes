@@ -8,9 +8,9 @@ using Inedo.Extensibility;
 [assembly: AssemblyProduct("any")]
 
 // Not for ProGet
-[assembly: AppliesTo(InedoProduct.BuildMaster | InedoProduct.Otter | InedoProduct.Hedgehog)]
+[assembly: AppliesTo(InedoProduct.BuildMaster | InedoProduct.Otter | InedoProduct.ProGet)]
 
 [assembly: ScriptNamespace("Kubernetes")]
 
-[assembly: AssemblyVersion("1.0.0")]
-[assembly: AssemblyFileVersion("1.0.0")]
+[assembly: AssemblyVersion("1.8.0")]
+[assembly: AssemblyFileVersion("1.8.0")]

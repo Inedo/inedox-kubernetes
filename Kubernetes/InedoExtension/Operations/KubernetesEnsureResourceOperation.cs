@@ -112,14 +112,14 @@ namespace Inedo.Extensions.Kubernetes.Operations
             }
         }
 
-        public override ComparisonResult Compare(PersistedConfiguration other)
+        public override Task<ComparisonResult> CompareAsync(PersistedConfiguration other, IOperationCollectionContext context)
         {
             var config = (KubernetesResourceConfiguration)other;
             if (this.Template.Exists != config.Exists)
-                return new ComparisonResult(new[] { new Difference(nameof(config.Exists), this.Template.Exists, config.Exists) });
+                return Task.FromResult(new ComparisonResult(new[] { new Difference(nameof(config.Exists), this.Template.Exists, config.Exists) }));
 
             if (!this.Template.Exists)
-                return ComparisonResult.Identical;
+                return Task.FromResult(ComparisonResult.Identical);
 
             var actual = JObject.Parse(config.NormalizedActual);
             var template = JObject.Parse(config.NormalizedApplied);
@@ -133,10 +133,10 @@ namespace Inedo.Extensions.Kubernetes.Operations
 
             // We only care about metadata and spec - the other fields are  either part of
             // the configuration key or stats that can change during collection.
-            return new ComparisonResult(
+            return Task.FromResult(new ComparisonResult(
                 GetJsonDifferences("metadata", template.Property("metadata").Value, actual.Property("metadata").Value)
                 .Concat(GetJsonDifferences("spec", template.Property("spec").Value, actual.Property("spec").Value))
-            );
+            ));
         }
 
         private void FixArrayMergeLength(JToken template, JToken actual)
