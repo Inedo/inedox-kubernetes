@@ -132,7 +132,7 @@ namespace Inedo.Extensions.Kubernetes.Scanners
                         else if (state?["terminated"] != null)
                         {
                             stateValue = ContainerState.Exited;
-                            if (DateTimeOffset.TryParse((string)state["running"]["startedAt"], out var parsedDate))
+                            if (DateTimeOffset.TryParse((string)state["terminated"]["finishedAt"] , out var parsedDate))
                                 created = parsedDate;
                         }
                         else if (state?["waiting"] != null)
