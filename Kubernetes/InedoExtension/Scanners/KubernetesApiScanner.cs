@@ -120,7 +120,7 @@ namespace Inedo.Extensions.Kubernetes.Scanners
                         var state = ((JObject)containerStatus["state"]);
 
                         ContainerState? stateValue = null;
-                        DateTimeOffset? created = null;
+                        DateTimeOffset? created = DateTimeOffset.UtcNow;
 
 
                         if (state?["running"] != null)
@@ -134,12 +134,15 @@ namespace Inedo.Extensions.Kubernetes.Scanners
                             stateValue = ContainerState.Exited;
                             if (DateTimeOffset.TryParse((string)state["terminated"]["finishedAt"] , out var parsedDate))
                                 created = parsedDate;
+                            if (DateTimeOffset.TryParse((string)state["terminated"]["startedAt"], out var parsedStartedDate))
+                                created = parsedStartedDate;
                         }
                         else if (state?["waiting"] != null)
                         {
                             stateValue = ContainerState.Created;
                         }
                         var id = (string)containerStatus["imageID"];
+                        if (id.Contains("@")) {
                         if (id.Contains("@")) {
                             containers.Add(new KubernetesContainerUsageData(server, (string)containerStatus["name"], id.Split('@')[1], stateValue, created));
                         }
