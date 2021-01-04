@@ -7,7 +7,6 @@ using Inedo.Extensibility;
 [assembly: AssemblyCopyright("Copyright © Inedo 2018")]
 [assembly: AssemblyProduct("any")]
 
-// Not for ProGet
 [assembly: AppliesTo(InedoProduct.BuildMaster | InedoProduct.Otter | InedoProduct.ProGet)]
 
 [assembly: ScriptNamespace("Kubernetes")]
