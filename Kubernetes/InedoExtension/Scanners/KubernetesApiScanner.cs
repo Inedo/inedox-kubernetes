@@ -113,8 +113,13 @@ namespace Inedo.Extensions.Kubernetes.Scanners
                 var pods = (JArray)result["items"];
                 foreach (var pod in pods)
                 {
-                    var server = $"{(string)pod["spec"]["nodeName"]}:{(string)pod["metadata"]["namespace"]}:{(string)pod["metadata"]["name"]}";
-                    var statuses = (JArray)pod["status"]["containerStatuses"];
+                    var server = $"{(string)pod["spec"]?["nodeName"]}:{(string)pod["metadata"]?["namespace"]}:{(string)pod["metadata"]?["name"]}";
+                    var statuses = (JArray)pod["status"]?["containerStatuses"];
+                    if (statuses == null)
+                    {
+                        this.LogWarning($"Pod {server} is missing a status/containerStatuses node.");
+                        continue;
+                    }
                     foreach(var containerStatus in statuses)
                     {
                         var state = ((JObject)containerStatus["state"]);
@@ -142,13 +147,13 @@ namespace Inedo.Extensions.Kubernetes.Scanners
                             stateValue = ContainerState.Created;
                         }
                         var id = (string)containerStatus["imageID"];
-                        if (id.Contains("@")) {
+                        if (id?.Contains("@") == true) {
                             containers.Add(new KubernetesContainerUsageData(server, (string)containerStatus["name"], id.Split('@')[1], stateValue, created));
                         }
                     }
                 }
 
-                var token = (string)result["metadata"]["continue"];
+                var token = (string)result["metadata"]?["continue"];
                 if (!string.IsNullOrWhiteSpace(token))
                     containers.AddRange(await this.GetContainersAsync(client, cancellationToken, token));
             }
