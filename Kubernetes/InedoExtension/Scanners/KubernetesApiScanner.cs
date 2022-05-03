@@ -17,18 +17,16 @@ using Newtonsoft.Json.Linq;
 
 namespace Inedo.Extensions.Kubernetes.Scanners
 {
-
     [DisplayName("Kubernetes API Scanner")]
     [Description("Automatically scans a Kubernetes API for container images and reports back their status.")]
     public sealed class KubernetesApiScanner : PackageContainerScanner
-
     {
         [Persistent]
         [DisplayName("Kubernetes API Base URL")]
         [PlaceholderText("http://localhost:8080/")]
         [Required]
         public string ApiBaseUrl { get; set; }
-        
+
         [Persistent]
         [DisplayName("Authorization Type")]
         [Required]
@@ -38,7 +36,7 @@ namespace Inedo.Extensions.Kubernetes.Scanners
         [DisplayName("User Name")]
         [Description("Only used if Authentication Type is Basic Authentication")]
         public string UserName { get; set; }
-        
+
         [DisplayName("Password")]
         [Description("Only used if Authentication Type is Basic Authentication")]
         [Persistent(Encrypted = true)]
@@ -55,50 +53,47 @@ namespace Inedo.Extensions.Kubernetes.Scanners
         {
             this.LogInformation($"Scanning Kubernetes API at {this.ApiBaseUrl}");
             var containers = new List<KubernetesContainerUsageData>();
-            using(var httpClient = new HttpClient())
+            var httpClient = SDK.CreateHttpClient();
+            try
             {
-                try
+                httpClient.BaseAddress = new Uri(this.ApiBaseUrl);
+                if (this.AuthorizationType == AuthenticationType.Basic)
                 {
-                    httpClient.BaseAddress = new Uri(this.ApiBaseUrl);
-                    if(this.AuthorizationType == AuthenticationType.Basic)
-                    {
-                        if (string.IsNullOrWhiteSpace(this.UserName))
-                            throw new ArgumentNullException(nameof(this.UserName));
-                        if (this.Password == null)
-                            throw new ArgumentNullException(nameof(this.Password));
-                        var password = AH.Unprotect(this.Password);
-                        if(string.IsNullOrWhiteSpace(password))
-                            throw new ArgumentNullException(nameof(this.Password));
+                    if (string.IsNullOrWhiteSpace(this.UserName))
+                        throw new ArgumentNullException(nameof(this.UserName));
+                    if (this.Password == null)
+                        throw new ArgumentNullException(nameof(this.Password));
+                    var password = AH.Unprotect(this.Password);
+                    if (string.IsNullOrWhiteSpace(password))
+                        throw new ArgumentNullException(nameof(this.Password));
 
-                        httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", Convert.ToBase64String(Encoding.UTF8.GetBytes($"{this.UserName}:{password}")));
-                    }
-                    else if(this.AuthorizationType == AuthenticationType.Bearer)
-                    {
-                       if (this.BearerToken == null)
-                            throw new ArgumentNullException(nameof(this.BearerToken));
-                        var token = AH.Unprotect(this.BearerToken);
-                        if(string.IsNullOrWhiteSpace(token))
-                            throw new ArgumentNullException(nameof(this.BearerToken));
+                    httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", Convert.ToBase64String(Encoding.UTF8.GetBytes($"{this.UserName}:{password}")));
+                }
+                else if (this.AuthorizationType == AuthenticationType.Bearer)
+                {
+                    if (this.BearerToken == null)
+                        throw new ArgumentNullException(nameof(this.BearerToken));
+                    var token = AH.Unprotect(this.BearerToken);
+                    if (string.IsNullOrWhiteSpace(token))
+                        throw new ArgumentNullException(nameof(this.BearerToken));
 
-                        httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-                    }
-                    containers.AddRange(await this.GetContainersAsync(httpClient, cancellationToken));
+                    httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
                 }
-
-                catch (HttpRequestException e)
-                {
-                    this.LogError("An error occurred while calling to the Kubernetes API: " + e.Message, e);
-                }
-                catch (Exception e)
-                {
-                    this.LogError(e);
-                }
-                finally
-                {
-                    httpClient.CancelPendingRequests();
-                }
+                containers.AddRange(await this.GetContainersAsync(httpClient, cancellationToken));
             }
 
+            catch (HttpRequestException e)
+            {
+                this.LogError("An error occurred while calling to the Kubernetes API: " + e.Message, e);
+            }
+            catch (Exception e)
+            {
+                this.LogError(e);
+            }
+            finally
+            {
+                httpClient.CancelPendingRequests();
+            }
 
             return new ScannerResults(null, containers.Distinct());
         }
@@ -120,7 +115,7 @@ namespace Inedo.Extensions.Kubernetes.Scanners
                         this.LogWarning($"Pod {server} is missing a status/containerStatuses node.");
                         continue;
                     }
-                    foreach(var containerStatus in statuses)
+                    foreach (var containerStatus in statuses)
                     {
                         var state = ((JObject)containerStatus["state"]);
 
@@ -137,7 +132,7 @@ namespace Inedo.Extensions.Kubernetes.Scanners
                         else if (state?["terminated"] != null)
                         {
                             stateValue = ContainerState.Exited;
-                            if (DateTimeOffset.TryParse((string)state["terminated"]["finishedAt"] , out var parsedDate))
+                            if (DateTimeOffset.TryParse((string)state["terminated"]["finishedAt"], out var parsedDate))
                                 created = parsedDate;
                             else if (DateTimeOffset.TryParse((string)state["terminated"]["startedAt"], out var parsedStartedDate))
                                 created = parsedStartedDate;
@@ -147,7 +142,8 @@ namespace Inedo.Extensions.Kubernetes.Scanners
                             stateValue = ContainerState.Created;
                         }
                         var id = (string)containerStatus["imageID"];
-                        if (id?.Contains("@") == true) {
+                        if (id?.Contains("@") == true)
+                        {
                             containers.Add(new KubernetesContainerUsageData(server, (string)containerStatus["name"], id.Split('@')[1], stateValue, created));
                         }
                     }
@@ -165,17 +161,13 @@ namespace Inedo.Extensions.Kubernetes.Scanners
             return containers;
         }
 
-
         public enum AuthenticationType
         {
             None = 0,
             [Description("Basic Authentication")]
-            Basic= 1,
+            Basic = 1,
             [Description("Bearer Token")]
             Bearer = 2
         }
     }
-
-    
-
 }
